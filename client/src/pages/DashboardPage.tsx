@@ -53,6 +53,7 @@ function formatDuration(value: number) {
 export function DashboardPage() {
   const { logout, token, user } = useAuth();
   const [filters, setFilters] = useState(initialFilters);
+  const [searchInput, setSearchInput] = useState(initialFilters.search);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stats, setStats] = useState({ total: 0, flagged: 0, processing: 0 });
@@ -109,6 +110,22 @@ export function DashboardPage() {
       setIsRefreshing(false);
     }
   }
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setFilters((current) => {
+        if (current.search === searchInput) {
+          return current;
+        }
+
+        return { ...current, search: searchInput };
+      });
+    }, 350);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [searchInput]);
 
   useEffect(() => {
     void loadVideos();
@@ -218,8 +235,8 @@ export function DashboardPage() {
           <div className="filters">
             <input
               placeholder="Search title, description, uploader"
-              value={filters.search}
-              onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
             />
             <select
               value={filters.status}
