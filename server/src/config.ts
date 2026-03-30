@@ -1,0 +1,21 @@
+import path from "node:path";
+import { z } from "zod";
+
+const schema = z.object({
+  PORT: z.string().default("4000"),
+  CLIENT_URL: z.string().default("http://localhost:5173"),
+  JWT_SECRET: z.string().min(8).default("replace-me"),
+  MONGODB_URI: z.string().default("mongodb://127.0.0.1:27017/video-platform"),
+  UPLOAD_DIR: z.string().default("./uploads")
+});
+
+const parsed = schema.parse(process.env);
+
+export const config = {
+  port: Number(parsed.PORT),
+  clientUrl: parsed.CLIENT_URL,
+  jwtSecret: parsed.JWT_SECRET,
+  mongoUri: parsed.MONGODB_URI,
+  uploadDir: path.resolve(process.cwd(), parsed.UPLOAD_DIR)
+};
+
