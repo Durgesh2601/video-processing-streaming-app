@@ -14,7 +14,14 @@ let io: Server | null = null;
 export function createSocketServer(server: HttpServer) {
   io = new Server(server, {
     cors: {
-      origin: config.clientUrl,
+      origin(origin, callback) {
+        if (!origin || config.allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error("Not allowed by CORS"));
+      },
       credentials: true
     }
   });
@@ -52,4 +59,3 @@ export function getIo() {
 
   return io;
 }
-
