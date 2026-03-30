@@ -1,11 +1,14 @@
+previews:
+  generation: automatic
+
 services:
   - name: video-processing-client
     type: web
     runtime: static
-    plan: free
+    plan: standard
     rootDir: client
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
         value: https://video-processing-api.onrender.com
