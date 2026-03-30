@@ -20,7 +20,14 @@ async function bootstrap() {
 
   app.use(
     cors({
-      origin: config.clientUrl,
+      origin(origin, callback) {
+        if (!origin || config.allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error("Not allowed by CORS"));
+      },
       credentials: true
     })
   );

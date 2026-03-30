@@ -17,6 +17,9 @@ const parsed = schema.parse(process.env);
 export const config = {
   port: Number(parsed.PORT),
   clientUrl: parsed.CLIENT_URL,
+  allowedOrigins: Array.from(
+    new Set([parsed.CLIENT_URL, "http://localhost:5173", "http://127.0.0.1:5173"])
+  ),
   jwtSecret: parsed.JWT_SECRET,
   mongoUri: parsed.MONGODB_URI,
   uploadDir: path.resolve(process.cwd(), parsed.UPLOAD_DIR)
