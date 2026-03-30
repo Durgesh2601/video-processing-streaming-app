@@ -56,7 +56,8 @@ export function DashboardPage() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stats, setStats] = useState({ total: 0, flagged: 0, processing: 0 });
-  const [loading, setLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mediaDuration, setMediaDuration] = useState<number | null>(null);
@@ -73,8 +74,14 @@ export function DashboardPage() {
 
   const visibleDuration = mediaDuration && mediaDuration > 0 ? mediaDuration : selectedVideo?.durationSeconds ?? 0;
 
-  async function loadVideos() {
-    setLoading(true);
+  async function loadVideos(options?: { background?: boolean }) {
+    const isBackground = options?.background ?? false;
+
+    if (isInitialLoading && !isBackground) {
+      setIsInitialLoading(true);
+    } else if (isBackground) {
+      setIsRefreshing(true);
+    }
 
     try {
       const params = Object.fromEntries(
@@ -83,12 +90,23 @@ export function DashboardPage() {
       const response = await api.get<VideoListResponse>("/api/videos", { params });
       setVideos(response.data.items);
       setStats(response.data.stats);
-      setSelectedId((current) => current ?? response.data.items[0]?.id ?? null);
+      setSelectedId((current) => {
+        if (!response.data.items.length) {
+          return null;
+        }
+
+        if (current && response.data.items.some((video) => video.id === current)) {
+          return current;
+        }
+
+        return response.data.items[0]?.id ?? null;
+      });
       setError(null);
     } catch {
       setError("Unable to load the dashboard right now.");
     } finally {
-      setLoading(false);
+      setIsInitialLoading(false);
+      setIsRefreshing(false);
     }
   }
 
@@ -106,7 +124,7 @@ export function DashboardPage() {
     });
 
     socket.on("video:update", () => {
-      void loadVideos();
+      void loadVideos({ background: true });
     });
 
     return () => {
@@ -285,7 +303,7 @@ export function DashboardPage() {
             </div>
 
             <div className="video-list">
-              {loading ? (
+              {isInitialLoading ? (
                 <div className="empty-state">Loading workspace...</div>
               ) : videos.length === 0 ? (
                 <div className="empty-state">No videos match the current filters.</div>
@@ -310,6 +328,7 @@ export function DashboardPage() {
                 ))
               )}
             </div>
+            {isRefreshing && videos.length > 0 ? <div className="muted">Refreshing updates...</div> : null}
           </div>
 
           <div className="panel player-panel">
