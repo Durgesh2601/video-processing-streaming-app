@@ -6,7 +6,7 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { Video } from "../models/Video.js";
-import { startProcessing } from "../services/processor.js";
+import { buildVideoTags, startProcessing } from "../services/processor.js";
 
 const upload = multer({
   dest: config.uploadDir,
@@ -150,9 +150,13 @@ videosRouter.patch("/:id/sensitivity", requireRole(["admin"]), async (req, res, 
       return;
     }
 
+    video.tags = buildVideoTags(payload.sensitivity, video.originalName);
+    await video.save();
+
     res.json({
       id: video.id,
-      sensitivity: video.sensitivity
+      sensitivity: video.sensitivity,
+      tags: video.tags
     });
   } catch (error) {
     next(error);
@@ -209,4 +213,3 @@ videosRouter.get("/:id/stream", async (req, res, next) => {
     next(error);
   }
 });
-

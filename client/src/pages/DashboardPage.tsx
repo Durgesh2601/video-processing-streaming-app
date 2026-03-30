@@ -38,6 +38,18 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatDuration(value: number) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "Processing...";
+  }
+
+  const rounded = Math.round(value);
+  const minutes = Math.floor(rounded / 60);
+  const seconds = rounded % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 export function DashboardPage() {
   const { logout, token, user } = useAuth();
   const [filters, setFilters] = useState(initialFilters);
@@ -47,6 +59,7 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mediaDuration, setMediaDuration] = useState<number | null>(null);
   const [uploadData, setUploadData] = useState({
     title: "",
     description: "",
@@ -57,6 +70,8 @@ export function DashboardPage() {
     () => videos.find((video) => video.id === selectedId) ?? videos[0] ?? null,
     [selectedId, videos]
   );
+
+  const visibleDuration = mediaDuration && mediaDuration > 0 ? mediaDuration : selectedVideo?.durationSeconds ?? 0;
 
   async function loadVideos() {
     setLoading(true);
@@ -133,6 +148,10 @@ export function DashboardPage() {
       setError("Unable to update the sensitivity status.");
     }
   }
+
+  useEffect(() => {
+    setMediaDuration(null);
+  }, [selectedVideo?.id]);
 
   return (
     <div className="dashboard-shell">
@@ -307,6 +326,10 @@ export function DashboardPage() {
                 <video
                   className="video-player"
                   controls
+                  onLoadedMetadata={(event) => {
+                    const duration = event.currentTarget.duration;
+                    setMediaDuration(Number.isFinite(duration) ? duration : null);
+                  }}
                   src={`${API_BASE_URL}${selectedVideo.streamUrl}?token=${token}`}
                 />
                 <div className="detail-grid">
@@ -320,7 +343,7 @@ export function DashboardPage() {
                   </div>
                   <div>
                     <span className="detail-label">Duration</span>
-                    <strong>{selectedVideo.durationSeconds}s</strong>
+                    <strong>{formatDuration(visibleDuration)}</strong>
                   </div>
                   <div>
                     <span className="detail-label">Progress</span>
@@ -328,23 +351,31 @@ export function DashboardPage() {
                   </div>
                 </div>
                 <p className="description-copy">{selectedVideo.description}</p>
-                <div className="tag-row">
-                  {selectedVideo.tags.map((tag) => (
-                    <span className="tag" key={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                {user?.role === "admin" ? (
-                  <div className="review-actions">
-                    <button type="button" onClick={() => overrideSensitivity(selectedVideo.id, "safe")}>
-                      Mark safe
-                    </button>
-                    <button type="button" onClick={() => overrideSensitivity(selectedVideo.id, "flagged")}>
-                      Flag content
-                    </button>
+                <div className="preview-footer">
+                  <div className="tag-panel">
+                    <span className="detail-label">Tags</span>
+                    <div className="tag-row">
+                      {selectedVideo.tags.map((tag) => (
+                        <span className="tag" key={tag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                ) : null}
+                  {user?.role === "admin" ? (
+                    <div className="actions-panel">
+                      <span className="detail-label">Review actions</span>
+                      <div className="review-actions">
+                        <button type="button" onClick={() => overrideSensitivity(selectedVideo.id, "safe")}>
+                          Mark safe
+                        </button>
+                        <button type="button" onClick={() => overrideSensitivity(selectedVideo.id, "flagged")}>
+                          Flag content
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </>
             ) : (
               <div className="empty-state">Choose a video from the library to preview it here.</div>
@@ -355,4 +386,3 @@ export function DashboardPage() {
     </div>
   );
 }
-

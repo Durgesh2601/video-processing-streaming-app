@@ -69,10 +69,3 @@ npm run dev
 ```bash
 npm run build
 ```
-
-## Suggested Incremental Push Sequence
-
-1. `chore: scaffold monorepo with client and server workspaces`
-2. `feat: add backend auth, rbac, uploads, processing, and streaming APIs`
-3. `feat: build frontend auth flow and video operations dashboard`
-4. `docs: add setup guide and project overview`

@@ -1,5 +1,6 @@
 import path from "node:path";
 import { getIo } from "../lib/socket.js";
+import type { Sensitivity } from "../models/Video.js";
 import { Video } from "../models/Video.js";
 
 const activeJobs = new Map<string, NodeJS.Timeout>();
@@ -17,6 +18,13 @@ function deriveSensitivity(title: string, originalName: string, size: number) {
 
 function deriveDuration(size: number) {
   return Math.max(30, Math.min(780, Math.round(size / 18000)));
+}
+
+export function buildVideoTags(sensitivity: Sensitivity, originalName: string) {
+  return [
+    sensitivity === "flagged" ? "needs-review" : "approved",
+    path.extname(originalName).replace(".", "").toLowerCase() || "video"
+  ];
 }
 
 export async function startProcessing(videoId: string) {
@@ -54,10 +62,7 @@ export async function startProcessing(videoId: string) {
 
     if (current.progress >= 100) {
       current.sensitivity = deriveSensitivity(current.title, current.originalName, current.size);
-      current.tags = [
-        current.sensitivity === "flagged" ? "needs-review" : "approved",
-        path.extname(current.originalName).replace(".", "").toLowerCase() || "video"
-      ];
+      current.tags = buildVideoTags(current.sensitivity, current.originalName);
     }
 
     await current.save();
@@ -91,4 +96,3 @@ export async function emitVideoUpdate(videoId: string) {
     updatedAt: video.updatedAt
   });
 }
-
