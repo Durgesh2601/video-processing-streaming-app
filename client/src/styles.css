@@ -222,6 +222,7 @@ a {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 310px 1fr;
+  align-items: start;
 }
 
 .sidebar {
@@ -232,6 +233,10 @@ a {
   flex-direction: column;
   justify-content: space-between;
   gap: 24px;
+  align-self: start;
+  position: sticky;
+  top: 20px;
+  min-height: calc(100vh - 40px);
 }
 
 .dashboard-main {
