@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
 import path from "node:path";
 import { z } from "zod";
+
+dotenv.config({ path: path.resolve(process.cwd(), "server/.env") });
 
 const schema = z.object({
   PORT: z.string().default("4000"),
@@ -18,4 +21,3 @@ export const config = {
   mongoUri: parsed.MONGODB_URI,
   uploadDir: path.resolve(process.cwd(), parsed.UPLOAD_DIR)
 };
-
